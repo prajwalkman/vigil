@@ -1,0 +1,38 @@
+{
+  "name": "vigil",
+  "version": "0.0.0",
+  "description": "A system and service monitoring framework based on NodeJS.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo NYI",
+    "dist": "echo NYI"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prajwalkman/vigil.git"
+  },
+  "keywords": [
+    "monitor",
+    "system",
+    "service",
+    "uptime",
+    "downtime",
+    "error"
+  ],
+  "dependencies": {
+
+  },
+  "devDependencies": {
+
+  },
+  "bundledDependencies": {
+
+  },
+  "author": {
+    "name": "Prajwal Manjunath",
+    "email": "prajwalkman@gmail.com"
+  },
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "gitHead": "9e9c7252509e31130422f76689c3c7b29cbf1553"
+}
