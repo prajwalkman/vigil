@@ -1,5 +1,5 @@
 exports.runner = ->
-  console.log "Monitor started"
+    console.log "Monitor started"
 
 exports.cleanup = ->
-  console.log "Monitor is cleaning up"
+    console.log "Monitor is cleaning up"
