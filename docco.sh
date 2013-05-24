@@ -1,0 +1,1 @@
+node_modules/.bin/docco README.md src/*.md CONTRIBUTING.md -l linear
