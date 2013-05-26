@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Dependencies</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          
+          <h1>Dependencies</h1>
+
+          
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+              
+                
+                
+                
+                  
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                  
+                
+                
+              
+                
+                
+                
+              
+              
+              
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="dependencies.html">
+                    src/dependencies.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="index.html">
+                    src/index.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="overseer.html">
+                    src/overseer.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="services.html">
+                    src/services.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="workers.html">
+                    src/workers.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="CONTRIBUTING.html">
+                    CONTRIBUTING.md
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <h2>Overview</h2>
+
+        
+      
+        
+        <p>Check dependency graph for cycles. Throw a <code>CycleError</code> if one is found, detailing the services involved.</p>
+<hr>
+<h2>Source-through</h2>
+
+        
+      
+        
+        
+        
+          <div class='highlight'><pre>_ = require <span class="string">'underscore'</span>
+
+<span class="class"><span class="keyword">class</span> <span class="title">CycleError</span> <span class="keyword">extends</span> <span class="title">Error</span></span>
+    constructor: (dependency, walkedList) -&gt;
+        index = _.indexOf walkedList, dependency
+        cycle = _.reject walkedList, (s) -&gt; _.indexOf(walkedList, s) &lt; index
+        cycle.push dependency
+        <span class="property">@message</span> = <span class="string">"Cyclic Dependency found: '<span class="subst">#{cycle.join '\' -&gt; \''}</span>'"</span>
+    name: <span class="string">'Cyclic Dependency Error'</span>
+
+module.<span class="function"><span class="title">exports</span></span> = (graph) -&gt;
+    services = _.keys graph
+    visited = []
+
+    <span class="function"><span class="title">visitNode</span></span> = (service, walked) -&gt;
+        walked = [] <span class="keyword">unless</span> _.isArray walked
+        visited.push service
+        walked.push service
+        <span class="function"><span class="title">visitDependencies</span></span> = (dependency) -&gt;
+            <span class="keyword">if</span> _.contains walked, dependency
+                <span class="keyword">throw</span> <span class="keyword">new</span> CycleError dependency, walked
+
+            visitNode dependency, walked.slice <span class="number">0</span>
+
+        _.each graph[service], visitDependencies
+
+    _.each services, visitNode
+
+    <span class="keyword">return</span> <span class="literal">true</span></pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

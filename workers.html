@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Workers</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          
+          <h1>Workers</h1>
+
+          
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+              
+                
+                
+                
+                  
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                  
+                
+                
+              
+                
+                
+                
+              
+              
+              
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="dependencies.html">
+                    src/dependencies.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="index.html">
+                    src/index.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="overseer.html">
+                    src/overseer.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="services.html">
+                    src/services.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="workers.html">
+                    src/workers.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="CONTRIBUTING.html">
+                    CONTRIBUTING.md
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <h2>Overview</h2>
+
+        
+      
+        
+        <p>This module acts as the base template for all <code>fork()</code>s by the Overseer.</p>
+<hr>
+<h2>Source-through</h2>
+
+        
+      
+        
+        <p>Required modules.</p>
+
+        
+          <div class='highlight'><pre>cluster = require <span class="string">'cluster'</span>
+domain  = require <span class="string">'domain'</span></pre></div>
+        
+      
+        
+        <p>Figure out this worker&#39;s role from its environment, and require the module for that role.</p>
+
+        
+          <div class='highlight'><pre>role = process.env.role
+
+worker = require <span class="string">"./<span class="subst">#{role}</span>"</span></pre></div>
+        
+      
+        
+        <p>Create a new domain within which the worker&#39;s code will be executed.</p>
+
+        
+          <div class='highlight'><pre>workerDomain = domain.create()</pre></div>
+        
+      
+        
+        <p>When an error in the worker process bubbles up all the way to the event loop, it is dangerous to continue running it, since it is technically in an <code>undefined</code> state. To overcome this, we use the <code>errorHandler</code> to essentially catch the error, call the worker&#39;s <code>cleanup()</code> method, and disconnect it from the cluster. This emits the cluster&#39;s <code>exit</code> event, which is caught by the master to replace this worker.</p>
+<blockquote>
+<p><code>.unref()</code> which will allow you to create a timer that is active but if it is the only item left in the event loop won&#39;t keep the program running.</p>
+</blockquote>
+
+        
+          <div class='highlight'><pre><span class="function"><span class="title">errorHandler</span></span> = (error) -&gt;
+    console.error 
+    <span class="keyword">try</span>
+        deathTimer = setTimeout (-&gt; process.exit <span class="number">1</span>), <span class="number">15000</span>
+        deathTimer.unref()
+        worker.cleanup()
+        cluster.worker.disconnect()
+    <span class="keyword">catch</span> deadlyError
+        console.error <span class="string">"Error Handler Errored!"</span>
+
+workerDomain.<span class="literal">on</span> <span class="string">'error'</span>, errorHandler
+
+workerDomain.run worker.runner</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>
