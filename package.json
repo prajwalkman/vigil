@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "A system and service monitoring framework based on NodeJS.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "./node_modules/.bin/mocha src/tests/*.coffee --compilers coffee:coffee-script",
     "build": "echo NYI",
     "dist": "echo NYI"
   },
@@ -23,6 +23,7 @@
   "dependencies": {
     "express": "latest",
     "underscore": "latest",
+    "underscore.string": "latest",
     "coffee-script": "latest",
     "socket.io": "latest",
     "commander": "latest",
@@ -37,7 +38,9 @@
   },
   "devDependencies": {
     "mocha": "latest",
-    "chai": "latest"
+    "chai": "latest",
+    "sinon": "latest",
+    "sinon-chai": "latest"
   },
   "author": {
     "name": "Prajwal Manjunath",

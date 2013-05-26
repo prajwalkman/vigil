@@ -4,8 +4,7 @@ Index
 Overview
 --------
 
-The entry point for the application. Sets up configuration locals from the
-environment or CLI arguments and the directories used for logging.
+The entry point for the application. Sets up configuration locals from the environment or CLI arguments and the directories used for logging.
 
 ***
 
