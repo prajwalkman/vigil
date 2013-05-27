@@ -1,6 +1,6 @@
-{sinon, should} = require './runner'
+sinon = require './runner'
 
-resolver = require '../dependencies'
+resolver = require '../src/dependencies'
 
 graph_valid =
     'myApp':     ['apache', 'passenger', 'mysql']

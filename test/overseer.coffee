@@ -1,10 +1,10 @@
-{sinon, should} = require './runner'
+sinon = require './runner'
 
 cluster = require 'cluster'
-overseer = require '../overseer'
+overseer = require '../src/overseer'
 
 describe 'Overseer master process', ->
     it 'should fork three times', ->
         forkSpy = sinon.spy cluster, "fork"
-        overseer()
+        master = overseer()
         forkSpy.should.have.been.calledThrice

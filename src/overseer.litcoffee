@@ -16,6 +16,7 @@ First, require the cluster module, and the list of well defined worker roles.
     cluster = require 'cluster'
     {roles} = require './config'
 
+    workers = {}
 
 This sets the configuration for `cluster.fork()`.
 
@@ -46,7 +47,6 @@ A callback to ensure graceful death of the master process.
 We can set environment variables for the child while forking. Here, we set the `role` environment variable so the worker knows what it's supposed to do. We loop through `roles` creating a worker for each, and storing their reference in the hash table `workers`.
 
     start = ->
-        workers = {}
         workers[role] = cluster.fork {role} for role in roles
 
         cluster.on 'exit', resurrectionHandler
@@ -56,7 +56,7 @@ We can set environment variables for the child while forking. Here, we set the `
 
         process.on 'exit', masterExitHandler
 
-        return process
+        return {process, cluster}
 
     if require.main is module
         start()

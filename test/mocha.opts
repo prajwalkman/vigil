@@ -1,0 +1,4 @@
+--compilers coffee:coffee-script
+--check-leaks
+--slow 75
+--timeout 200
