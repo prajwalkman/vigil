@@ -40,7 +40,9 @@
     "mocha": "latest",
     "chai": "latest",
     "sinon": "latest",
-    "sinon-chai": "latest"
+    "sinon-chai": "latest",
+    "chai-as-promised": "latest",
+    "mocha-as-promised": "latest"
   },
   "author": {
     "name": "Prajwal Manjunath",

@@ -1,4 +1,6 @@
 --compilers coffee:coffee-script
 --check-leaks
---slow 75
+--slow 50
 --timeout 200
+--require coffee-script
+--require test/runner.coffee

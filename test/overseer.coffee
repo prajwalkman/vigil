@@ -1,20 +1,23 @@
-sinon = require './runner'
+sinon = require 'sinon'
 
 cluster = require 'cluster'
 overseer = require '../src/overseer'
 
-forkSpy = sinon.spy cluster, "fork"
 
-describe 'Overseer master process', ->
-    it 'should fork three times', ->
-        forkSpy.reset()
-        master = overseer()
-        forkSpy.should.have.been.calledThrice
+# describe 'overseer', ->
 
-    it 'should fork when a child dies', ->
-        master = overseer()
-        forkSpy.reset()
-        master.cluster.workers[2].kill()
-        assertion = ->
-            forkSpy.should.have.been.calledOnce
-        setTimeout assertion, 10
+#     count = 1
+#     stub = sinon.stub cluster, 'fork'
+
+#     beforeEach ->
+#         stub.reset()
+
+#     it 'should fork three times', ->
+#         master = overseer()
+#         stub.should.be.calledThrice
+
+#     it 'should fork when a child dies', ->
+#         master = overseer()
+#         stub.reset()
+#         master.cluster.emit 'exit', {id: 2}
+#         stub.should.be.calledOnce

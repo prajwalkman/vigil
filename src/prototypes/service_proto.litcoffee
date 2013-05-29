@@ -19,10 +19,25 @@ Source-through
     {exec}         = require 'child_process'
 
     class Service
-        constructor: (@name, @pidLocation, @processName) ->
-        pids: []
-        stats: {}
-        getPid: ->
+        constructor: (config) ->
+            {
+                @name
+                @startCmd
+                @stopCmd
+                @reloadCmd
+                @pidConfig
+                @procConfig
+                @watchers
+                @reporters
+                @failover
+                @groups
+                @uid
+                @gid
+                @cwd
+                @env
+                @chroot
+            } = config
+        getPids: ->
             if @pidLocation?
                 fs.readFile @pidLocation, (err, data) ->
                     throw err if err
