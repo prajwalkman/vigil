@@ -1,8 +1,8 @@
 parse = require '../src/config/parser'
-vm = require 'vm'
+vm    = require 'vm'
 
-mockFileValid = __dirname + '/mocks/parser_mock_valid.conf'
-mockFileInvalid = __dirname + '/mocks/parser_mock_invalid.conf'
+mockFileValid   = __dirname + '/mocks/parser_mock/valid.conf'
+mockFileInvalid = __dirname + '/mocks/parser_mock/invalid.conf'
 
 expectedResult =
     alpha:

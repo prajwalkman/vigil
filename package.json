@@ -34,7 +34,8 @@
     "aws-sdk": "latest",
     "nodemailer": "latest",
     "docco": "latest",
-    "shelljs": "latest"
+    "shelljs": "latest",
+    "glob": "latest"
   },
   "devDependencies": {
     "mocha": "latest",
