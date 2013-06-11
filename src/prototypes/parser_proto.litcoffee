@@ -15,13 +15,11 @@ We will compile the config file programmatically using coffee-script to its equi
 
     _              = require 'underscore'
     _.str          = require 'underscore.string'
-    fs             = require 'fs'
     q              = require 'q'
     glob           = require 'glob'
     vm             = require 'vm'
     coffee         = require 'coffee-script'
-
-    readFile       = q.denodeify fs.readFile
+    fs             = require 'q-io/fs'
     globber        = q.denodeify glob
 
 The sandbox object contains the functions required for parsing the contents of the config file.
@@ -29,7 +27,7 @@ The sandbox object contains the functions required for parsing the contents of t
     sandbox =
         as: (val) -> val: val
 
-We evaluate the generated javascript in the context of the sandbox, and return the result. Errors cause the promise to be rejected.
+We evaluate the generated javascript in the context of the sandbox, and return the result. Errors cause the promise to be rejected. In the specific case of errors in compiling the config file, we decorate the error with the file name.
 
     parser = (filenames) ->
         if _.isString filenames
@@ -40,8 +38,8 @@ We evaluate the generated javascript in the context of the sandbox, and return t
         filename_array = []
         fileContents = []
         results = []
-        compile = ->
-            executer = (data) ->
+        compiler = ->
+            compile = (data) ->
                 try
                     compiledCode = coffee.compile data.toString(), bare: true
                     vm.runInNewContext compiledCode, sandbox
@@ -55,17 +53,17 @@ We evaluate the generated javascript in the context of the sandbox, and return t
                     else
                         deferred.reject error
 
-            results = _.map fileContents, executer
+            results = _.map fileContents, compile
             deferred.resolve results
 
         reader = (files) ->
             filename_array = _.uniq files
-            promises = _.map filename_array, (file) -> readFile file
+            promises = _.map filename_array, (file) -> fs.read file
             failureCallback = (error) -> deferred.reject error
             successCallback = (resolvedPromises) ->
                 fileContents = resolvedPromises
                 try
-                    compile()
+                    compiler()
                 catch error
                     deferred.reject error
             q.all(promises).then successCallback, failureCallback

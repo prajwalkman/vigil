@@ -31,6 +31,7 @@
     "winston": "latest",
     "moment": "latest",
     "q": "latest",
+    "q-io": "latest",
     "aws-sdk": "latest",
     "nodemailer": "latest",
     "docco": "latest",

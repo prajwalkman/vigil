@@ -13,13 +13,12 @@ Source-through
 
     _              = require 'underscore'
     _.str          = require 'underscore.string'
-    fs             = require 'fs'
     pidStatsProto  = require './pid_stat_proto'
     procStatsProto = require './proc_stat_proto'
     {exec}         = require 'child_process'
     q              = require 'q'
     glob           = require 'glob'
-    readFile       = q.denodeify fs.readFile
+    fs             = require 'q-io/fs'
 
 
     class Service
@@ -49,7 +48,7 @@ Source-through
             proc = @procConfig
 
             reader = ->
-                promises = _.map pidFiles, (file) -> readFile file
+                promises = _.map pidFiles, (file) -> fs.read file
                 failureCallback = (error) ->
                     deferred.reject error
                 successCallback = ->
@@ -62,7 +61,7 @@ Source-through
                 if error
                     deferred.reject error
                 else if _.isEmpty files
-                    deferred.reject new Error "No files matched pattern '#{pid}'"
+                    deferred.reject new Error "No files matched '#{pid}'"
                 else
                     pidFiles = pidFiles.concat files
                 reader()
@@ -78,13 +77,19 @@ Source-through
                     reader()
             return deferred.promise
 
+        getPidStats: (pids) ->
+            deferred = q.defer()
+            stats = []
+            files = _.map pids, (pid) -> "/proc/#{pid}/stat"
+            exists_promises = _.map files, (file) -> fs.exists file
+            q.all(exists_promises).then ->
+                exists_array = _.map exists_promises, (promise) ->
+                    promise.valueOf()
 
-        getPidStats: ->
-            throw "Premature pidStats" unless @pid?
-            fs.readFile "/pid/#{@pid}/stat", (err, data) ->
-                throw err if err
-                statArray = data.split /\s/
-                @stats = _.object pidStatsProto, statArray
+
+
+
+
         getProcStats: ->
 
     module.exports = Service

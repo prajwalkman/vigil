@@ -10,8 +10,9 @@ pidFiles = [
 pidFiles = _.map pidFiles, (file) ->
     __dirname + '/mocks/service_proto_mock/' + file
 
-pidFilesGlob = __dirname + '/mocks/service_proto_mock/' + '*.pid'
-pidFilesGlobInvalid = __dirname + '/mocks/service_proto_mock/' + '*.nonexistantextension'
+pidFilesGlob = "#{__dirname}/mocks/service_proto_mock/*.pid"
+pidFilesGlobInvalid = "#{__dirname}/mocks/service_proto_mock/" +
+    "*.nonexistantextension"
 
 expectedPids = [500, 1200, 300]
 
@@ -32,7 +33,7 @@ describe 'ServiceProto', ->
     it 'should reject exact error when file doesnt exist', ->
         newPidFiles = pidFiles.concat 'nonexistantfile'
         s = new Service pidConfig: newPidFiles
-        s.getPids().should.be.rejected.with Error, /.*ENOENT.*nonexistantfile.*/
+        s.getPids().should.be.rejected.with Error, /ENOENT.*nonexistantfile/
 
     it 'should return array of pids when glob is passed', ->
         s = new Service pidConfig: pidFilesGlob
@@ -40,4 +41,4 @@ describe 'ServiceProto', ->
 
     it 'should throw error when no matches for glob', ->
         s = new Service pidConfig: pidFilesGlobInvalid
-        s.getPids().should.be.rejected.with Error, "pattern"
+        s.getPids().should.be.rejected.with Error, "matched"
