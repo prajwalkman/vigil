@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Service</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          
+          <h1>Service</h1>
+
+          
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+              
+                
+                
+                
+                  
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                  
+                
+                
+              
+                
+                
+                
+              
+              
+              
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="dependencies.html">
+                    src/dependencies.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="index.html">
+                    src/index.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="overseer.html">
+                    src/overseer.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="parser_proto.html">
+                    src/prototypes/parser_proto.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="service_proto.html">
+                    src/prototypes/service_proto.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="services.html">
+                    src/services.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="workers.html">
+                    src/workers.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="CONTRIBUTING.html">
+                    CONTRIBUTING.md
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <h2>Overview</h2>
+
+        
+      
+        
+        <p>A template for the Service object.</p>
+<hr>
+<h2>Source-through</h2>
+
+        
+      
+        
+        
+        
+          <div class='highlight'><pre>_              = require <span class="string">'underscore'</span>
+_.str          = require <span class="string">'underscore.string'</span>
+pidStatsProto  = require <span class="string">'./pid_stat_proto'</span>
+procStatsProto = require <span class="string">'./proc_stat_proto'</span>
+{exec}         = require <span class="string">'child_process'</span>
+q              = require <span class="string">'q'</span>
+glob           = require <span class="string">'glob'</span>
+fs             = require <span class="string">'q-io/fs'</span>
+
+
+<span class="class"><span class="keyword">class</span> <span class="title">Service</span></span>
+    constructor: (config) -&gt;
+        {
+            <span class="property">@name</span>
+            <span class="property">@startCmd</span>
+            <span class="property">@stopCmd</span>
+            <span class="property">@reloadCmd</span>
+            <span class="property">@pidConfig</span>
+            <span class="property">@procConfig</span>
+            <span class="property">@watchers</span>
+            <span class="property">@reporters</span>
+            <span class="property">@failover</span>
+            <span class="property">@groups</span>
+            <span class="property">@uid</span>
+            <span class="property">@gid</span>
+            <span class="property">@cwd</span>
+            <span class="property">@env</span>
+            <span class="property">@chroot</span>
+        } = config
+
+    getPids: -&gt;
+        deferred = q.defer()
+        pid = <span class="property">@pidConfig</span>
+        pidFiles = []
+        proc = <span class="property">@procConfig</span>
+
+        <span class="function"><span class="title">reader</span></span> = -&gt;
+            promises = _.map pidFiles, (file) -&gt; fs.read file
+            <span class="function"><span class="title">failureCallback</span></span> = (error) -&gt;
+                deferred.reject error
+            <span class="function"><span class="title">successCallback</span></span> = -&gt;
+                contents = _.map promises, (promise) -&gt;
+                    parseInt promise.valueOf().toString().trim()
+                deferred.resolve contents
+            q.all(promises).<span class="keyword">then</span> successCallback, failureCallback
+
+        <span class="function"><span class="title">globCallback</span></span> = (error, files) -&gt;
+            <span class="keyword">if</span> error
+                deferred.reject error
+            <span class="keyword">else</span> <span class="keyword">if</span> _.isEmpty files
+                deferred.reject <span class="keyword">new</span> Error <span class="string">"No files matched '<span class="subst">#{pid}</span>'"</span>
+            <span class="keyword">else</span>
+                pidFiles = pidFiles.concat files
+            reader()
+
+        <span class="keyword">if</span> _.isEmpty proc
+            <span class="keyword">if</span> _.isString(pid) <span class="keyword">and</span> pid.match(<span class="regexp">/\*+/</span>)
+                glob pid, globCallback
+            <span class="keyword">else</span>
+                <span class="keyword">if</span> _.isString pid
+                    pidFiles.push pid
+                <span class="keyword">else</span> <span class="keyword">if</span> _.isArray pid
+                    pidFiles = pidFiles.concat pid
+                reader()
+        <span class="keyword">return</span> deferred.promise
+
+    getPidStats: (pids) -&gt;
+        deferred = q.defer()
+        stats = []
+        files = _.map pids, (pid) -&gt; <span class="string">"/proc/<span class="subst">#{pid}</span>/stat"</span>
+        exists_promises = _.map files, (file) -&gt; fs.exists file
+        q.all(exists_promises).<span class="keyword">then</span> -&gt;
+            exists_array = _.map exists_promises, (promise) -&gt;
+                promise.valueOf()
+
+
+
+
+
+    getProcStats: -&gt;
+
+module.exports = Service</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>

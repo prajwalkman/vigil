@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>Parser</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="page">
+
+      <div class="header">
+        
+          
+          <h1>Parser</h1>
+
+          
+        
+
+        
+          <div class="toc">
+            <h3>Table of Contents</h3>
+            <ol>
+              
+              
+                
+                
+                
+                  
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                
+              
+                
+                
+                  
+                
+                
+              
+                
+                
+                
+              
+              
+              
+              
+                
+                <li>
+                  <a class="source" href="README.html">
+                    README.md
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="dependencies.html">
+                    src/dependencies.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="index.html">
+                    src/index.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="overseer.html">
+                    src/overseer.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="parser_proto.html">
+                    src/prototypes/parser_proto.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="service_proto.html">
+                    src/prototypes/service_proto.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="services.html">
+                    src/services.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="workers.html">
+                    src/workers.litcoffee
+                  </a>
+                </li>
+              
+                
+                <li>
+                  <a class="source" href="CONTRIBUTING.html">
+                    CONTRIBUTING.md
+                  </a>
+                </li>
+              
+            </ol>
+          </div>
+        
+      </div>
+
+      
+        
+        <h2>Overview</h2>
+
+        
+      
+        
+        <p>This is used to parse configuration files written in our DSL.</p>
+<hr>
+<h2>Source-through</h2>
+
+        
+      
+        
+        <p>We will compile the config file programmatically using coffee-script to its equivalent javascript. We also use <code>Q</code> promise objects to simplify both the API and the unit tests.</p>
+
+        
+          <div class='highlight'><pre>_              = require <span class="string">'underscore'</span>
+_.str          = require <span class="string">'underscore.string'</span>
+q              = require <span class="string">'q'</span>
+glob           = require <span class="string">'glob'</span>
+vm             = require <span class="string">'vm'</span>
+coffee         = require <span class="string">'coffee-script'</span>
+fs             = require <span class="string">'q-io/fs'</span>
+globber        = q.denodeify glob</pre></div>
+        
+      
+        
+        <p>The sandbox object contains the functions required for parsing the contents of the config file.</p>
+
+        
+          <div class='highlight'><pre>sandbox =
+    as: (val) -&gt; val: val</pre></div>
+        
+      
+        
+        <p>We evaluate the generated javascript in the context of the sandbox, and return the result. Errors cause the promise to be rejected. In the specific case of errors in compiling the config file, we decorate the error with the file name.</p>
+
+        
+          <div class='highlight'><pre><span class="function"><span class="title">parser</span></span> = (filenames) -&gt;
+    <span class="keyword">if</span> _.isString filenames
+        filenames = [filenames]
+    deferred = q.defer()
+    globPatterns = _.filter filenames, (name) -&gt; name.match <span class="regexp">/\*+/</span>
+    rawNames = _.difference filenames, globPatterns
+    filename_array = []
+    fileContents = []
+    results = []
+    <span class="function"><span class="title">compiler</span></span> = -&gt;
+        <span class="function"><span class="title">compile</span></span> = (data) -&gt;
+            <span class="keyword">try</span>
+                compiledCode = coffee.compile data.toString(), bare: <span class="literal">true</span>
+                vm.runInNewContext compiledCode, sandbox
+            <span class="keyword">catch</span> error
+                <span class="keyword">if</span> error <span class="keyword">instanceof</span> SyntaxError
+                    index = _.indexOf fileContents, data
+                    filename = filename_array[index]
+                    message = error.message
+                    newError = <span class="keyword">new</span> SyntaxError <span class="string">"<span class="subst">#{filename}</span>: <span class="subst">#{message}</span>"</span>
+                    deferred.reject newError
+                <span class="keyword">else</span>
+                    deferred.reject error
+
+        results = _.map fileContents, compile
+        deferred.resolve results
+
+    <span class="function"><span class="title">reader</span></span> = (files) -&gt;
+        filename_array = _.uniq files
+        promises = _.map filename_array, (file) -&gt; fs.read file
+        <span class="function"><span class="title">failureCallback</span></span> = (error) -&gt; deferred.reject error
+        <span class="function"><span class="title">successCallback</span></span> = (resolvedPromises) -&gt;
+            fileContents = resolvedPromises
+            <span class="keyword">try</span>
+                compiler()
+            <span class="keyword">catch</span> error
+                deferred.reject error
+        q.all(promises).<span class="keyword">then</span> successCallback, failureCallback
+
+    <span class="function"><span class="title">globResolve</span></span> = (patterns) -&gt;
+        <span class="function"><span class="title">successCallback</span></span> = (promise_array) -&gt;
+            files = _.map promise_array, (promise) -&gt; promise.valueOf()
+            files = _.flatten files
+            reader(rawNames.concat files)
+        <span class="function"><span class="title">failureCallback</span></span> = (error) -&gt; deferred.reject error
+        promises = _.map patterns, (pattern) -&gt; globber pattern
+        q.all(promises).<span class="keyword">then</span> successCallback, failureCallback
+
+    <span class="keyword">if</span> _.isEmpty globPatterns
+        reader(rawNames)
+    <span class="keyword">else</span>
+        globResolve globPatterns
+
+    <span class="keyword">return</span> deferred.promise
+
+module.exports = parser</pre></div>
+        
+      
+      <div class="fleur">h</div>
+    </div>
+  </div>
+</body>
+</html>
